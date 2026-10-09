@@ -1,0 +1,25 @@
+- name: create user and add make passwordless login  
+  hosts: danish
+  become: yes
+  tasks:
+    - name: create users
+      ansible.builtin.user: 
+       name: "{{ item }}"
+       shell:  /bin/bash
+       state: present
+       groups: sudo
+       append: yes
+      loop:
+         - ahmad  
+         - ali  
+         - shahid 
+      ignore_errors: yes
+    - name: Set up authorized keys for users
+      ansible.posix.authorized_key:
+        user: "{{ item }}"
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+      loop:
+        - ahmad
+        - ali
+        - shahid
