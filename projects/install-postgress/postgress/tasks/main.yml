@@ -1,0 +1,31 @@
+#SPDX-License-Identifier: MIT-0
+---
+- name: install postgress
+  ansible.builtin.apt:
+    name:
+      - postgresql
+      - postgresql-contrib
+      - libpq-dev
+      - python3-psycopg2
+    state: present
+- name: start service
+  systemd:
+    name: postgresql
+    state: started
+    enabled: yes
+- name: Create PostgreSQL database
+  ansible.builtin.postgresql_db:
+    name: mydb
+  become: yes
+  become_user: postgres
+- name: Create PostgreSQL user
+  ansible.builtin.postgresql_user:
+    user: postgres
+    login_db: mydb
+    login_host: "{{ db_host }}"
+    login_port: "{{db_port}}"
+    login_user: "{{ db_user }}"
+    login_password:  "{{ db_password }}"
+    login_unix_socket: /var/run/postgresql
+  become: yes
+  become_user: postgres 

@@ -1,0 +1,6 @@
+---
+- name: main playbook
+  hosts: db
+  become: yes
+  roles:
+    - postgress
