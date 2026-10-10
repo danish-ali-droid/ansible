@@ -1,0 +1,25 @@
+#SPDX-License-Identifier: MIT-0
+---
+  - name: Ensure apache is disable
+    ansible.builtin.service:
+      name: apache2
+      state: stopped
+      enabled: no
+  - name: Ensure nginx is latest
+    ansible.builtin.apt:
+       name: nginx
+       state: latest
+  - name: copy file
+    ansible.builtin.copy:
+       src: templates/nginx.conf.j2
+       dest: /etc/nginx/conf.d/website.conf
+       mode: '0644'
+    notify: nginx-service
+  - name: copy files
+    ansible.builtin.copy:
+       src: files/index.html
+       dest: /var/www/html/
+    notify: nginx-service
+
+
+

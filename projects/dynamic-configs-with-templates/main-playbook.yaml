@@ -1,0 +1,6 @@
+---
+- name: main playbok
+  hosts: danish
+  become: yes
+  roles:
+    - web-role
