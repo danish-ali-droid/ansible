@@ -1,0 +1,70 @@
+#SPDX-License-Identifier: MIT-0
+---
+- name: Ensure group for node_exporter exists
+  group:
+    name: "{{ node_exporter_system_group }}"
+    system: true
+    state: present
+
+- name: Ensure user for node_exporter exists
+  user:
+    name: "{{ node_exporter_system_user }}"
+    group: "{{ node_exporter_system_group }}"
+    system: true
+    shell: /sbin/nologin
+    create_home: false
+    state: present
+
+- name: Install wget and tar on Ubuntu (Debian family)
+  apt:
+    name:
+      - wget
+      - tar
+    state: present
+    update_cache: true
+  when: ansible_distribution == "Ubuntu"
+
+- name: Install wget and tar on AlmaLinux / RHEL (RedHat family)
+  dnf:
+    name:
+      - wget
+      - tar
+    state: present
+  when: ansible_distribution in ["AlmaLinux", "RedHat", "CentOS"]
+
+- name: Download Node Exporter binary tarball
+  get_url:
+    url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+    dest: "/tmp/node_exporter-{{ node_exporter_version }}.tar.gz"
+    mode: '0644'
+
+- name: Extract Node Exporter binary
+  unarchive:
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.tar.gz"
+    dest: "/tmp/"
+    remote_src: true
+
+- name: Copy binary to local bin directory
+  copy:
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter"
+    dest: "/usr/local/bin/node_exporter"
+    owner: "{{ node_exporter_system_user }}"
+    group: "{{ node_exporter_system_group }}"
+    mode: '0755'
+    remote_src: true
+
+- name: Deploy systemd service unit file for Node Exporter
+  template:
+    src: node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart node_exporter
+
+- name: Ensure node_exporter service is enabled and started
+  systemd:
+    name: node_exporter
+    enabled: true
+    state: started
+    daemon_reload: true
